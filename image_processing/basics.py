@@ -26,6 +26,26 @@ def showResizeImg(img, name, waitMS, x=0, y=0, width=1280, height=720):
 
 	return key & 0xFF
 
+def showImageVertical(imgList, imgName, waitMS, x=0, y=0, width=720, height=480):
+	
+	maxW = 0
+	maxH = 0
+	for img in imgList:
+		h, w = img.shape[:2]
+		maxW = max(maxW, w)
+		maxH += h
+	output = np.zeros((maxH,maxW,3), dtype=np.uint8)
+
+	nextY = 0
+	for img in imgList:
+		h, w = img.shape[:2]
+		if len(img.shape) == 2:
+			img = np.dstack([img]*3)
+		output[nextY:nextY+h, 0:w] = img
+		nextY += h
+
+	showResizeImg(output, imgName, waitMS, x, y, width, height)	
+
 def blur_img(img, method):
 	if (method == 'bilateral'):
 		diameter = 9

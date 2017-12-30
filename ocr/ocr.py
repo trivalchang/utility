@@ -10,16 +10,22 @@ import os
 
 import pytesseract
 from PIL import Image
+from blockbinarypixelsum import BlockBinaryPixelSum
 
 import sys
 path = os.path.dirname(os.path.abspath(__file__))
-path = path + '/../image_processing'
-print('file path={}'.format(path))
-sys.path.append(path)
+sys.path.append(path + '/../')
 
-import basics
+import image_processing.basics as basics
+import cPickle
+
+bbpCharModel = cPickle.loads(open(path+'/bbp_char.cpickle').read())
+bbpDigitModel = cPickle.loads(open(path+'/bbp_digits.cpickle').read())
 
 CONTOUR_WIDTH = 2
+
+blockSizes = ((5, 5), (5, 10), (10, 5), (10, 10))
+bbpDesc = BlockBinaryPixelSum(targetSize=(30, 15), blockSizes=blockSizes)	
 
 
 def ocr_by_tesseract(img, boundingBox):
@@ -35,11 +41,18 @@ def ocr_by_tesseract(img, boundingBox):
 	text = pytesseract.image_to_string(Image.open('bib.png'))
 	return text
 
-def ocr(img, visualize=False):
+def ocr_by_BBP(img, boundingBox):
+	(x, y, w, h) = boundingBox;
+	textImg = img[y:y+h, x:x+w]
+	features = bbpDesc.describe(textImg).reshape(1, -1)
+	prediction = bbpDigitModel.predict(features)[0]
+	return prediction
+
+def ocr(img, method='bbp', visualize=False):
 
 	h, w = img.shape[:2]
 
-	if False:
+	if len(img.shape)==3 and img.shape[2]>1:
 		gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		thresh = basics.threshold_img(gray, 'adaptive')
 	else:
@@ -47,31 +60,24 @@ def ocr(img, visualize=False):
 	contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	contours = contours[1]
 
-	print('contours = {}'.format(len(contours)))
 	cnt_img = img.copy()
 	text = ''
 	for cnt in contours:
 		(x, y, w, h) = cv2.boundingRect(cnt)
-		#print('boundingRect = {}'.format((x, y, w, h)))
 		rect = cv2.minAreaRect(cnt)
 
 		ar = float(w)/float(h)
-		#print('ar = {}'.format(ar))
 		
 		box = cv2.boxPoints(rect)
 		box = np.int0(box)
-		#print('minAreaRect = {}'.format(box))
 
 		cv2.rectangle(cnt_img, (x, y), (x+w-1, y+h-1), (0, 0, 255), CONTOUR_WIDTH)
-		text = text + ocr_by_tesseract(img, (x, y, w, h))
-		cnt_img = img.copy()
-		cv2.drawContours(cnt_img, [cnt], -1, (0, 255, 0), CONTOUR_WIDTH)	
-		basics.showResizeImg(cnt_img, 'contour', 0, 1000, h*2, 0, 0)
+		if (method == 'bbp'):
+			text = text + ocr_by_BBP(img, (x, y, w, h))
+		elif (method == 'tesseract'):
+			text = text + ocr_by_tesseract(img, (x, y, w, h))
 
-	print('text = {}'.format(text))
-	basics.showImageVertical([img, thresh, cnt_img], 'debug_ocr', 0, 1000, 0, 0, 0)
+	if (visualize == True):
+		basics.showImageVertical([img, thresh, cnt_img], 'debug_ocr', 0, 1000, 0, 0, 0)
 
-	#cv2.drawContours(img, contours, -1, (0, 255, 0), CONTOUR_WIDTH)	
-	#basics.showResizeImg(img, 'contour', 0, 1000, h*2, 0, 0)
-
-	#return mask
+	return text
