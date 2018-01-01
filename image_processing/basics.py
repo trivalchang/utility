@@ -8,9 +8,10 @@ import os
 
 def resizeImg(img, width=1280, height=720):
 	(h,w) = img.shape[:2]
+	print('img size is {}x{} to {}x{}'.format(w,h,width,height))
 	r = min([float(width)/w, float(height)/h])
 	(w, h) = (int(r * w), int(r * h))
-
+	print('resizeImg to {}x{}'.format(w,h))
 	img = cv2.resize(img, (w, h))
 	return img
 
