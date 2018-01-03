@@ -9,7 +9,7 @@ import os
 import cPickle
 import numpy as np
 import sys 
-from search.search import searchImageByMatchTemplate
+from search.search import searchImageByMatchTemplate, HOGParam, searchImageByHOG
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -59,6 +59,22 @@ class TestImageMatch(unittest.TestCase):
 			print('search {} in {} - val = {}, loc = {}'.format(templateName, targetName, val, (x, y, w, h)))
 			self.assertEqual(realLoc, (x, y, w, h))
 
+	def testSlidingWindowHOGMatch(self):
+		test_img = [
+					('img77.jpg', 'title_pic_app_foc.png', 0.70, (0, 0, 0, 0), (578, 168, 80, 74)),
+					('img77.jpg', 'template0.png', 0.66, (0, 0, 0, 0), (324, 152, 61, 73)),
+					]
+		for (targetName, templateName, ratio, searchRegion, realLoc) in test_img:
+			targetImg = cv2.imread(path+'/testcase_searcSlidingWindowHOG/'+targetName)
+			(targetH, targetW) = targetImg.shape[:2]
+			targetImgOrg = targetImg.copy()
+			targetImg = cv2.cvtColor(targetImg, cv2.COLOR_BGR2GRAY)
+			scaledTarget = basics.resizeImg(targetImg, int(targetW*ratio), int(targetH*ratio))
+			templateImg = cv2.imread(path+'/testcase_searchTemplateMatch/'+templateName)
+			templateImg = cv2.cvtColor(templateImg, cv2.COLOR_BGR2GRAY)
+			hogParam = HOGParam(orientations=9, pixels_per_cell=(8,8), cells_per_block=(2,2), transform_sqrt=True, block_norm="L1")
+			print('hogParam = {}'.format(hogParam))
+			searchImageByHOG(templateImg, scaledTarget, searchRegion, 0.3, hogParam, (10, 10), bVisualize=True)	
 
 if __name__ == '__main__':
 	unittest.main()
