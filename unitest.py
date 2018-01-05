@@ -61,20 +61,46 @@ class TestImageMatch(unittest.TestCase):
 
 	def testSlidingWindowHOGMatch(self):
 		test_img = [
-					('img77.jpg', 'title_pic_app_foc.png', 0.70, (0, 0, 0, 0), (578, 168, 80, 74)),
-					('img77.jpg', 'template0.png', 0.66, (0, 0, 0, 0), (324, 152, 61, 73)),
+					('img77.jpg', 'title_pic_foc.png', 0.7, 1, (0, 0, 0, 0), (578, 168, 80, 74)),
+					('img77.jpg', 'title_pic_audio_foc.png', 0.7, 1, (0, 0, 0, 0), (578, 168, 80, 74)),
+					('img77.jpg', 'title_pic_app_foc.png', 0.7, 1, (0, 0, 0, 0), (578, 168, 80, 74)),
+					('img77.jpg', 'title_pic_sx_foc.png', 0.7, 1, (0, 0, 0, 0), (578, 168, 80, 74)),
+					('img77.jpg', 'title_pic_setup_foc.png', 0.7, 1, (0, 0, 0, 0), (578, 168, 80, 74)),
+					('img77.jpg', 'template0.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
+					('img77.jpg', 'template1.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
+					('img77.jpg', 'template2.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
+					('img77.jpg', 'template3.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
+					('img77.jpg', 'template4.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
+					('img77.jpg', 'template5.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
+					('img77.jpg', 'template6.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
 					]
-		for (targetName, templateName, ratio, searchRegion, realLoc) in test_img:
+		for (targetName, templateName, targetRatio, templateRatio, searchRegion, realLoc) in test_img:
 			targetImg = cv2.imread(path+'/testcase_searcSlidingWindowHOG/'+targetName)
 			(targetH, targetW) = targetImg.shape[:2]
-			targetImgOrg = targetImg.copy()
+			targetImg = basics.resizeImg(targetImg, int(targetW*targetRatio), int(targetH*targetRatio))
+			targetImgColor = targetImg.copy()
 			targetImg = cv2.cvtColor(targetImg, cv2.COLOR_BGR2GRAY)
-			scaledTarget = basics.resizeImg(targetImg, int(targetW*ratio), int(targetH*ratio))
-			templateImg = cv2.imread(path+'/testcase_searchTemplateMatch/'+templateName)
+			targetImg = basics.blur_img(targetImg, 'bilateral')
+			templateImg = cv2.imread(path+'/testcase_searcSlidingWindowHOG/'+templateName)
 			templateImg = cv2.cvtColor(templateImg, cv2.COLOR_BGR2GRAY)
-			hogParam = HOGParam(orientations=9, pixels_per_cell=(8,8), cells_per_block=(2,2), transform_sqrt=True, block_norm="L1")
-			print('hogParam = {}'.format(hogParam))
-			searchImageByHOG(templateImg, scaledTarget, searchRegion, 0.3, hogParam, (10, 10), bVisualize=True)	
+			templateImg = basics.resizeImg(templateImg, int(templateImg.shape[1]*templateRatio), int(templateImg.shape[0]*templateRatio))
+			hogParam = HOGParam(orientations=9, 
+								pixels_per_cell=(8,8), 
+								cells_per_block=(2,2), 
+								transform_sqrt=True, 
+								block_norm="L2")
+			templateAR = float(templateImg.shape[1])/float(templateImg.shape[0])
+			stepSize = (10, int(10/templateAR))
+			(bFound, val, (x, y, w, h)) = searchImageByHOG(templateImg, 
+														targetImg, 
+														searchRegion, 
+														0.3, 
+														hogParam, 
+														stepSize, 
+														bVisualize=False)
+			print('search {} in {} - val = {}, loc = {}'.format(templateName, targetName, val, (x, y, w, h)))
+			cv2.rectangle(targetImgColor, (x, y), (x+w, y+h), (0, 255, 0), 2)
+			key = basics.showResizeImg(targetImgColor, 'targe', 0, 0, 200)
 
 if __name__ == '__main__':
 	unittest.main()

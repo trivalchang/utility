@@ -95,15 +95,14 @@ def searchImageByHOG(template, target, searchRegion, threshold, hogParam, Search
 		if (y+templateH > tH) or (x+templateW > tW):
 			continue
 
-		if (False):
+		if bVisualize == True:
 			(hogWindow, hogImage) = feature.hog(winImg, orientations=hogParam.orientations, pixels_per_cell=hogParam.pixels_per_cell, 
 					cells_per_block=hogParam.cells_per_block, transform_sqrt=hogParam.transform_sqrt, block_norm=hogParam.block_norm, visualise=True)
 		else:
 			hogWindow = feature.hog(winImg, orientations=hogParam.orientations, pixels_per_cell=hogParam.pixels_per_cell, 
 					cells_per_block=hogParam.cells_per_block, transform_sqrt=hogParam.transform_sqrt, block_norm=hogParam.block_norm, visualise=False)
 
-		#if (bVisualize == True):
-		if (False):
+		if (bVisualize == True):
 			hogImage = exposure.rescale_intensity(hogImage, out_range=(0, 255))
 			hogImage = hogImage.astype("uint8")	
 			basics.showResizeImg(hogImage, 'window HOG', 1, 500, 0, 0, 0)
@@ -125,3 +124,5 @@ def searchImageByHOG(template, target, searchRegion, threshold, hogParam, Search
 		clone = target.copy()
 		cv2.rectangle(clone, (minLoc[0], minLoc[1]), (minLoc[2], minLoc[3]), (0, 255, 0), 2)
 		key = basics.showResizeImg(clone, 'targe', 0, 0, 200)
+
+	return (True, minDist, (minLoc[0], minLoc[1], templateW, templateH))
