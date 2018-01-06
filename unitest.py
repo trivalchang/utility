@@ -15,7 +15,7 @@ path = os.path.dirname(os.path.abspath(__file__))
 
 class TestOCR(unittest.TestCase):
 	def test4pointTransformBBP(self):
-		test_img = [('testcast_4pOCR/577.png', '577'), ('testcast_4pOCR/04162.png', '04162')]
+		test_img = [('testcase/4pOCR/577.png', '577'), ('testcase/4pOCR/04162.png', '04162')]
 		for (fname, realText) in test_img:
 			
 			img = cv2.imread(path+'/'+fname)
@@ -40,7 +40,7 @@ class TestOCR(unittest.TestCase):
 
 class TestImageMatch(unittest.TestCase):
 	def testTemplateMatch(self):
-		testcase_path = 'testcase_searchTemplateMatch'
+		testcase_path = 'testcase/searchTemplateMatch'
 		test_img = [
 					('img77.jpg', 'title_pic_app_foc.png', 0.70, (0, 0, 0, 0), (578, 168, 80, 74)),
 					('img77.jpg', 'template0.png', 0.66, (0, 0, 0, 0), (324, 152, 61, 73)),
@@ -75,13 +75,13 @@ class TestImageMatch(unittest.TestCase):
 					('img77.jpg', 'template6.png', 0.66, 1, (0, 0, 0, 0), (324, 152, 61, 73)),
 					]
 		for (targetName, templateName, targetRatio, templateRatio, searchRegion, realLoc) in test_img:
-			targetImg = cv2.imread(path+'/testcase_searcSlidingWindowHOG/'+targetName)
+			targetImg = cv2.imread(path+'/testcase/searchSlidingWindowHOG/'+targetName)
 			(targetH, targetW) = targetImg.shape[:2]
 			targetImg = basics.resizeImg(targetImg, int(targetW*targetRatio), int(targetH*targetRatio))
 			targetImgColor = targetImg.copy()
 			targetImg = cv2.cvtColor(targetImg, cv2.COLOR_BGR2GRAY)
 			targetImg = basics.blur_img(targetImg, 'bilateral')
-			templateImg = cv2.imread(path+'/testcase_searcSlidingWindowHOG/'+templateName)
+			templateImg = cv2.imread(path+'/testcase/searchSlidingWindowHOG/'+templateName)
 			templateImg = cv2.cvtColor(templateImg, cv2.COLOR_BGR2GRAY)
 			templateImg = basics.resizeImg(templateImg, int(templateImg.shape[1]*templateRatio), int(templateImg.shape[0]*templateRatio))
 			hogParam = HOGParam(orientations=9, 
