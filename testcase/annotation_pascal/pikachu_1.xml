@@ -1,0 +1,24 @@
+<annotation verified="yes">
+  <folder>pikachu</folder>
+  <filename>../pikachu/pikachu_1</filename>
+  <source>
+    <database>Unkown</database>
+  </source>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>pikachu</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>194</xmin>
+      <ymin>61</ymin>
+      <xmax>996</xmax>
+      <ymax>718</ymax>
+    </bndbox>
+  </object>
+</annotation>
