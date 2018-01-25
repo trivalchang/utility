@@ -16,7 +16,7 @@ class ImageReader():
 			for f in os.listdir(path):
 				if f.endswith(".png") or f.endswith(".jpg"):
 					self.imageList.append(path+'/'+f)
-			print('imgList = {}'.format(self.imageList))
+			#print('imgList = {}'.format(self.imageList))
 		else:
 			if path == 'webcam':
 				self.cap = cv2.VideoCapture(0)

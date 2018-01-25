@@ -37,6 +37,7 @@ class mouseCrop():
 
 	def move(self, x, y):
 		self.cropEndPos = (x, y)
+		print('move')
 		if self.dragCallbacFunc != None and self.bCropStarted == True:
 			self.dragCallbacFunc(False, self.cropStartPos, self.cropEndPos)
 
