@@ -47,14 +47,16 @@ def showImageVertical(imgList, imgName, waitMS, x=0, y=0, width=720, height=480)
 
 	showResizeImg(output, imgName, waitMS, x, y, width, height)	
 
-def blur_img(img, method):
+def blur_img(img, method, param):
 	if (method == 'bilateral'):
 		diameter = 9
 		sigmaColor = 21
 		sigmaSpace = 7
 		blur = cv2.bilateralFilter(img, diameter, sigmaColor, sigmaSpace)
-	else:
-		blur = img.copy()
+	elif (method == 'gussian'):
+		blur = cv2.GaussianBlur(img, param, 0)
+	else:	
+		blur = img()
 	return blur
 
 def threshold_img(img, method):
