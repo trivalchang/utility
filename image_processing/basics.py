@@ -59,18 +59,21 @@ def blur_img(img, method, param):
 		blur = img()
 	return blur
 
-def threshold_img(img, method):
+def threshold_img(img, method, inv=True):
+
+	inv = cv2.THRESH_BINARY_INV if inv==True else cv2.THRESH_BINARY
+
 	if (method == 'adaptive'):
-		thresholded = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 25, 15)
+		thresholded = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, inv, 5, 5)
 	elif (method == 'OTSU'):
-		T, thresholded = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+		T, thresholded = cv2.threshold(img, 0, 255, inv | cv2.THRESH_OTSU)
 	else:
 		if (method != None):
 			try:
 				T = int(method)
 			except:
 				T = 128
-		T, thresholded = cv2.threshold(img, T, 255, cv2.THRESH_BINARY_INV)
+		T, thresholded = cv2.threshold(img, T, 255, inv)
 	return thresholded
 
 def morphological_process(img, method, kernelSize):
