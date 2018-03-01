@@ -14,6 +14,7 @@ import image_processing.basics as basics
 from skimage import exposure
 from skimage import feature
 from scipy.spatial import distance
+import multiprocessing
 
 HOGParam = collections.namedtuple('HOGParam',  'orientations pixels_per_cell cells_per_block transform_sqrt block_norm')
 
@@ -174,7 +175,21 @@ def sliding_window(image, stepSize, windowSize):
 			yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
 
-def searchImageByHOGFeature(hogTemplate, templateShape, target, searchRegion, threshold, hogParam, SearchStep, bVisualize=False):
+def __matchFunc(params):
+	(x, y, hogParam, hogTemplate, window, q) = params
+	hogWindow = feature.hog(window, 
+							orientations=hogParam.orientations, 
+							pixels_per_cell=hogParam.pixels_per_cell, 
+							cells_per_block=hogParam.cells_per_block, 
+							transform_sqrt=hogParam.transform_sqrt, 
+							block_norm=hogParam.block_norm, visualise=False)
+	if (len(hogTemplate) != len(hogWindow)):
+		print('len doesn\'t match')
+		return
+	dist = distance.euclidean(hogTemplate,hogWindow)
+	q.put((x, y, dist))
+
+def searchImageByHOGFeature(hogTemplate, templateShape, target, searchRegion, threshold, hogParam, SearchStep, bMP=True, bVisualize=False):
 
 	(x0, y0, x1, y1) = searchRegion
 	if (x0, y0, x1, y1) == (0, 0, 0, 0):
@@ -185,48 +200,29 @@ def searchImageByHOGFeature(hogTemplate, templateShape, target, searchRegion, th
 	(templateH, templateW) = templateShape[:2]
 	(tH, tW) = target.shape[:2]
 
-	print('hogParam = {}'.format(hogParam))
+	searchList = []
+	m = multiprocessing.Manager()
+	queueResult = m.Queue()
+
+	for (x, y, window) in sliding_window(target, SearchStep, windowSize=(templateW, templateH)):		
+		if (y+templateH > tH) or (x+templateW > tW):
+			continue
+		searchList.append((x, y, hogParam, hogTemplate, window, queueResult))
+
 
 	minDist = 999.0
 	minLoc = (0, 0, 0, 0)
-	for (x, y, window) in sliding_window(target, SearchStep, windowSize=(templateW, templateH)):
-		clone = target.copy()
-		
-		winImg = target[y:y+templateH, x:x+templateW]
-		if (y+templateH > tH) or (x+templateW > tW):
-			continue
 
-		if bVisualize == True:
-			(hogWindow, hogImage) = feature.hog(winImg, orientations=hogParam.orientations, pixels_per_cell=hogParam.pixels_per_cell, 
-					cells_per_block=hogParam.cells_per_block, transform_sqrt=hogParam.transform_sqrt, block_norm=hogParam.block_norm, visualise=True)
-		else:
-			hogWindow = feature.hog(winImg, orientations=hogParam.orientations, pixels_per_cell=hogParam.pixels_per_cell, 
-					cells_per_block=hogParam.cells_per_block, transform_sqrt=hogParam.transform_sqrt, block_norm=hogParam.block_norm, visualise=False)
-
-		if (bVisualize == True):
-			hogImage = exposure.rescale_intensity(hogImage, out_range=(0, 255))
-			hogImage = hogImage.astype("uint8")	
-			basics.showResizeImg(hogImage, 'window HOG', 1, 500, 0, 0, 0)
-			cv2.rectangle(clone, (x, y), (x + templateW, y + templateH), (0, 255, 0), 2)
-			key = basics.showResizeImg(clone, 'targe', 1, 0, 200)
-		else:
-			key = ord(' ')
-		if (len(hogTemplate) != len(hogWindow)):
-			continue
-		dist = distance.euclidean(hogTemplate,hogWindow)
+	if bMP == True:
+		pool = multiprocessing.Pool()
+		pool.map(__matchFunc, searchList)
+	else:
+		for item in searchList:
+			__matchFunc(item)
+	while queueResult.empty() != True:
+		(x, y, dist) = queueResult.get()
 		if (minDist > dist):
 			minDist = dist
 			minLoc = [x, y, x + templateW, y + templateH]
-		if (key == ord('q')):
-			break
-
-	print('minDist = {}, minLoc = {}'.format(minDist, minLoc))
-	if (minDist > threshold):
-		return (False, minDist, (minLoc[0], minLoc[1], templateW, templateH))
-
-	if (bVisualize == True):
-		clone = target.copy()
-		cv2.rectangle(clone, (minLoc[0], minLoc[1]), (minLoc[2], minLoc[3]), (0, 255, 0), 2)
-		key = basics.showResizeImg(clone, 'targe', 0, 0, 200)
 
 	return (True, minDist, (minLoc[0]+searchRegion[0], minLoc[1]+searchRegion[1], templateW, templateH))
